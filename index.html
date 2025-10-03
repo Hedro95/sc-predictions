@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supreme Court Predictions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        h1 {
+            background: linear-gradient(135deg, #8b0000 0%, #dc143c 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            max-width: 600px;
+        }
+        
+        select {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ced4da;
+            border-radius: 6px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+        
+        button {
+            padding: 12px 24px;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2a5298;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            padding: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        th {
+            background: #343a40;
+            color: white;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: bold;
+            border: 1px solid #495057;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        td {
+            padding: 12px 10px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            min-width: 80px;
+            vertical-align: middle;
+        }
+        
+        td:first-child {
+            text-align: left;
+            font-weight: bold;
+            background: #f8f9fa;
+            min-width: 200px;
+            position: relative;
+            padding-right: 40px;
+        }
+        
+        td:nth-child(2) {
+            text-align: center;
+            font-weight: bold;
+            background: #e9ecef;
+            min-width: 80px;
+            padding: 0;
+        }
+        
+        .guesser-cell {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .guesser-name {
+            padding: 12px 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .guesser-name:last-child {
+            border-bottom: none;
+        }
+        
+        .remove-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        
+        .remove-btn:hover {
+            background: #c82333;
+        }
+        
+        td.red {
+            background-color: #dc3545;
+        }
+        
+        td.blue {
+            background-color: #007bff;
+        }
+        
+        td.clickable {
+            cursor: pointer;
+            transition: transform 0.2s;
+            padding: 0;
+        }
+        
+        .justice-cell {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .vote-option {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .vote-option:last-child {
+            border-bottom: none;
+        }
+        
+        .vote-option:hover {
+            transform: scale(1.05);
+        }
+        
+        td.red {
+            background-color: #dc3545;
+        }
+        
+        td.blue {
+            background-color: #007bff;
+        }
+        
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>The Big Supreme Court Guesswork Extravaganza: 2025 - 2026</h1>
+        
+        <div class="controls">
+            <div class="input-group">
+                <select id="caseSelect">
+                    <option value="">Select a case from the 2025-2026 term...</option>
+                </select>
+                <button onclick="addCase()">Add Case</button>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="predictionTable">
+                <thead>
+                    <tr>
+                        <th>Case</th>
+                        <th>Guesser</th>
+                        <th>Roberts</th>
+                        <th>Thomas</th>
+                        <th>Alito</th>
+                        <th>Sotomayor</th>
+                        <th>Kagan</th>
+                        <th>Gorsuch</th>
+                        <th>Kavanaugh</th>
+                        <th>Barrett</th>
+                        <th>Jackson</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr class="empty-state">
+                        <td colspan="11">Add a case to begin making predictions!</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const justiceCount = 9;
+        
+        // Official cases for 2025-2026 Supreme Court term
+        const cases = [
+            "Bowe v. United States",
+            "Barrett v. United States",
+            "Chiles v. Salazar",
+            "Berk v. Choy",
+            "Ellingburg v. United States",
+            "Villarreal v. Texas",
+            "USPS, et al. v. Konan, Lebene",
+            "The Hain Celestial Group, Inc. v. Palmquist",
+            "Fernandez v. United States",
+            "Bost v. Illinois State Board of Elections",
+            "Hencely v. Fluor Corporation",
+            "Case v. Montana",
+            "The GEO Group, Inc. v. Menocal",
+            "Hamm v. Smith",
+            "Coney Island Auto Parts Unlimited, Inc. v. Burton",
+            "Rutherford v. United States",
+            "First Choice Women's Resource Centers, Inc. v. Platkin",
+            "Chevron USA Inc. v. Plaquemines Parish, Louisiana",
+            "Department of Education v. Career Colleges and Schools of Texas",
+            "Louisiana v. Callais",
+            "Landor v. Louisiana Department of Corrections and Public Safety",
+            "M & K Employee Solutions, LLC v. Trustees of the IAM National Pension Fund",
+            "Cox Communications, Inc. v. Sony Music Entertainment",
+            "FS Credit Opportunities Corp. v. Saba Capital Master Fund, Ltd.",
+            "Urias-Orellana v. Bondi",
+            "Enbridge Energy, LP v. Nessel",
+            "Rico v. United States",
+            "National Republican Senatorial Committee v. Federal Election Commission"
+        ];
+        
+        // Populate the dropdown
+        const caseSelect = document.getElementById('caseSelect');
+        cases.forEach(caseName => {
+            const option = document.createElement('option');
+            option.value = caseName;
+            option.textContent = caseName;
+            caseSelect.appendChild(option);
+        });
+        
+        function addCase() {
+            const select = document.getElementById('caseSelect');
+            const caseName = select.value;
+            
+            if (!caseName) {
+                alert('Please select a case from the dropdown');
+                return;
+            }
+            
+            const tableBody = document.getElementById('tableBody');
+            
+            // Check if case already exists
+            const existingCases = Array.from(tableBody.querySelectorAll('tr td:first-child')).map(td => td.textContent);
+            if (existingCases.includes(caseName)) {
+                alert('This case has already been added');
+                return;
+            }
+            
+            // Remove empty state if it exists
+            const emptyState = tableBody.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+            
+            // Create new row
+            const row = document.createElement('tr');
+            
+            // Add case name cell
+            const caseCell = document.createElement('td');
+            caseCell.textContent = caseName;
+            
+            // Add remove button
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.textContent = '✕';
+            removeBtn.onclick = function() {
+                removeCase(row);
+            };
+            caseCell.appendChild(removeBtn);
+            
+            row.appendChild(caseCell);
+            
+            // Add guesser name cell
+            const guesserCell = document.createElement('td');
+            guesserCell.innerHTML = `
+                <div class="guesser-cell">
+                    <div class="guesser-name">Alex</div>
+                    <div class="guesser-name">Joe</div>
+                </div>
+            `;
+            row.appendChild(guesserCell);
+            
+            // Add clickable cells for each justice (2 rows per justice)
+            for (let i = 0; i < justiceCount; i++) {
+                const cell = document.createElement('td');
+                cell.className = 'clickable';
+                
+                const voteDiv = document.createElement('div');
+                voteDiv.className = 'justice-cell';
+                
+                // Create two vote options (Alex and Joe)
+                for (let j = 0; j < 2; j++) {
+                    const voteOption = document.createElement('div');
+                    voteOption.className = 'vote-option';
+                    voteOption.dataset.state = 'blank';
+                    voteOption.onclick = function(e) {
+                        e.stopPropagation();
+                        cycleState(voteOption);
+                    };
+                    voteDiv.appendChild(voteOption);
+                }
+                
+                cell.appendChild(voteDiv);
+                row.appendChild(cell);
+            }
+            
+            tableBody.appendChild(row);
+            
+            // Reset select
+            select.value = '';
+        }
+        
+        function cycleState(element) {
+            const currentState = element.dataset.state;
+            
+            if (currentState === 'blank') {
+                element.dataset.state = 'red';
+                element.style.backgroundColor = '#dc3545';
+            } else if (currentState === 'red') {
+                element.dataset.state = 'blue';
+                element.style.backgroundColor = '#007bff';
+            } else {
+                element.dataset.state = 'blank';
+                element.style.backgroundColor = '';
+            }
+        }
+        
+        function removeCase(row) {
+            const tableBody = document.getElementById('tableBody');
+            row.remove();
+            
+            // If no rows left, show empty state
+            if (tableBody.children.length === 0) {
+                const emptyRow = document.createElement('tr');
+                emptyRow.className = 'empty-state';
+                const emptyCell = document.createElement('td');
+                emptyCell.colSpan = 11;
+                emptyCell.textContent = 'Add a case to begin making predictions!';
+                emptyRow.appendChild(emptyCell);
+                tableBody.appendChild(emptyRow);
+            }
+        }
+    </script>
+</body>
+</html>
