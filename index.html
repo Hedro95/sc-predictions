@@ -285,6 +285,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
+        console.log('Script loaded successfully');
+
         const firebaseConfig = {
             apiKey: "AIzaSyC9VB2KY5cizlyxkbGLr2XNJQvt9CzIt0A",
             authDomain: "sc-predictions.firebaseapp.com",
@@ -299,6 +301,8 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const casesRef = ref(database, 'cases');
+
+        console.log('Script loaded successfully');
 
         const justiceCount = 9;
         const justiceNames = ['Roberts', 'Thomas', 'Alito', 'Sotomayor', 'Kagan', 'Gorsuch', 'Kavanaugh', 'Barrett', 'Jackson'];
