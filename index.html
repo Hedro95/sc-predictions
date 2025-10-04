@@ -302,7 +302,7 @@
         const database = getDatabase(app);
         const casesRef = ref(database, 'cases');
 
-        console.log('Script loaded successfully');
+        console.log('Firebase initialized', database);
 
         const justiceCount = 9;
         const justiceNames = ['Roberts', 'Thomas', 'Alito', 'Sotomayor', 'Kagan', 'Gorsuch', 'Kavanaugh', 'Barrett', 'Jackson'];
