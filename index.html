@@ -296,8 +296,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
-        console.log('Script loaded successfully');
-
         const firebaseConfig = {
             apiKey: "AIzaSyC9VB2KY5cizlyxkbGLr2XNJQvt9CzIt0A",
             authDomain: "sc-predictions.firebaseapp.com",
@@ -313,12 +311,11 @@
         const database = getDatabase(app);
         const casesRef = ref(database, 'cases');
 
-        console.log('Firebase initialized', database);
-
         const justiceCount = 9;
         const justiceNames = ['Roberts', 'Thomas', 'Alito', 'Sotomayor', 'Kagan', 'Gorsuch', 'Kavanaugh', 'Barrett', 'Jackson'];
         
         let isLoading = false;
+        let inputTimers = {};
         
         const cases = [
             "Bowe v. United States",
