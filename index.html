@@ -231,14 +231,6 @@
             text-align: center;
         }
         
-        td.red {
-            background-color: #dc3545;
-        }
-        
-        td.blue {
-            background-color: #007bff;
-        }
-        
         .empty-state {
             padding: 40px;
             text-align: center;
@@ -289,12 +281,30 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9VB2KY5cizlyxkbGLr2XNJQvt9CzIt0A",
+            authDomain: "sc-predictions.firebaseapp.com",
+            projectId: "sc-predictions",
+            storageBucket: "sc-predictions.firebasestorage.app",
+            messagingSenderId: "796180462479",
+            appId: "1:796180462479:web:6e8a27e0ee94a513d469fa",
+            measurementId: "G-LW2KL4X5D3",
+            databaseURL: "https://sc-predictions-default-rtdb.firebaseio.com",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const casesRef = ref(database, 'cases');
+
         const justiceCount = 9;
         const justiceNames = ['Roberts', 'Thomas', 'Alito', 'Sotomayor', 'Kagan', 'Gorsuch', 'Kavanaugh', 'Barrett', 'Jackson'];
-        const STORAGE_KEY = 'scotus_predictions';
         
-        // Official cases for 2025-2026 Supreme Court term
+        let isLoading = false;
+        
         const cases = [
             "Bowe v. United States",
             "Barrett v. United States",
@@ -326,7 +336,6 @@
             "National Republican Senatorial Committee v. Federal Election Commission"
         ];
         
-        // Populate the dropdown
         const caseSelect = document.getElementById('caseSelect');
         cases.forEach(caseName => {
             const option = document.createElement('option');
@@ -334,8 +343,36 @@
             option.textContent = caseName;
             caseSelect.appendChild(option);
         });
-        
-        function addCase() {
+
+        // Listen for real-time updates from Firebase
+        onValue(casesRef, (snapshot) => {
+            isLoading = true;
+            const data = snapshot.val();
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            if (data) {
+                Object.keys(data).forEach(caseKey => {
+                    const caseData = data[caseKey];
+                    addCaseRow(caseData.name, caseKey, caseData);
+                });
+            } else {
+                const emptyRow = document.createElement('tr');
+                emptyRow.className = 'empty-state';
+                const emptyCell = document.createElement('td');
+                emptyCell.colSpan = 14;
+                emptyCell.textContent = 'Add a case to begin making predictions!';
+                emptyRow.appendChild(emptyCell);
+                tableBody.appendChild(emptyRow);
+            }
+            isLoading = false;
+        });
+
+        function getCaseKey(caseName) {
+            return caseName.replace(/[.#$[\]]/g, '_');
+        }
+
+        window.addCase = function() {
             const select = document.getElementById('caseSelect');
             const caseName = select.value;
             
@@ -344,40 +381,39 @@
                 return;
             }
             
+            const caseKey = getCaseKey(caseName);
+            const caseRef = ref(database, `cases/${caseKey}`);
+            
+            set(caseRef, {
+                name: caseName,
+                votes: Array(justiceCount).fill().map(() => ['blank', 'blank']),
+                majority: ['', ''],
+                concurrences: ['', ''],
+                dissents: ['', '']
+            });
+            
+            select.value = '';
+        };
+
+        function addCaseRow(caseName, caseKey, savedData = null) {
             const tableBody = document.getElementById('tableBody');
             
-            // Check if case already exists
-            const existingCases = Array.from(tableBody.querySelectorAll('tr td:first-child')).map(td => td.textContent);
-            if (existingCases.includes(caseName)) {
-                alert('This case has already been added');
-                return;
-            }
-            
-            // Remove empty state if it exists
-            const emptyState = tableBody.querySelector('.empty-state');
-            if (emptyState) {
-                emptyState.remove();
-            }
-            
-            // Create new row
             const row = document.createElement('tr');
+            row.dataset.caseKey = caseKey;
             
-            // Add case name cell
             const caseCell = document.createElement('td');
             caseCell.textContent = caseName;
             
-            // Add remove button
             const removeBtn = document.createElement('button');
             removeBtn.className = 'remove-btn';
             removeBtn.textContent = '✕';
             removeBtn.onclick = function() {
-                removeCase(row);
+                removeCase(caseKey);
             };
             caseCell.appendChild(removeBtn);
             
             row.appendChild(caseCell);
             
-            // Add guesser name cell
             const guesserCell = document.createElement('td');
             guesserCell.innerHTML = `
                 <div class="guesser-cell">
@@ -387,7 +423,6 @@
             `;
             row.appendChild(guesserCell);
             
-            // Add clickable cells for each justice (2 rows per justice)
             for (let i = 0; i < justiceCount; i++) {
                 const cell = document.createElement('td');
                 cell.className = 'clickable';
@@ -395,14 +430,24 @@
                 const voteDiv = document.createElement('div');
                 voteDiv.className = 'justice-cell';
                 
-                // Create two vote options (Alex and Joe)
                 for (let j = 0; j < 2; j++) {
                     const voteOption = document.createElement('div');
                     voteOption.className = 'vote-option';
-                    voteOption.dataset.state = 'blank';
+                    
+                    const state = savedData?.votes?.[i]?.[j] || 'blank';
+                    voteOption.dataset.state = state;
+                    voteOption.dataset.justiceIndex = i;
+                    voteOption.dataset.guesserIndex = j;
+                    
+                    if (state === 'red') {
+                        voteOption.style.backgroundColor = '#dc3545';
+                    } else if (state === 'blue') {
+                        voteOption.style.backgroundColor = '#007bff';
+                    }
+                    
                     voteOption.onclick = function(e) {
                         e.stopPropagation();
-                        cycleState(voteOption);
+                        cycleState(voteOption, caseKey);
                     };
                     voteDiv.appendChild(voteOption);
                 }
@@ -411,7 +456,6 @@
                 row.appendChild(cell);
             }
             
-            // Add Majority column
             const majorityCell = document.createElement('td');
             majorityCell.className = 'clickable';
             const majorityDiv = document.createElement('div');
@@ -439,6 +483,16 @@
                 perCuriamOption.textContent = 'Per Curiam';
                 select.appendChild(perCuriamOption);
                 
+                if (savedData?.majority?.[j]) {
+                    select.value = savedData.majority[j];
+                }
+                
+                select.addEventListener('change', (e) => {
+                    if (!isLoading) {
+                        updateMajority(caseKey, j, e.target.value);
+                    }
+                });
+                
                 majorityInput.appendChild(select);
                 majorityDiv.appendChild(majorityInput);
             }
@@ -446,7 +500,6 @@
             majorityCell.appendChild(majorityDiv);
             row.appendChild(majorityCell);
             
-            // Add Concurrence(s) column
             const concurrenceCell = document.createElement('td');
             concurrenceCell.className = 'clickable';
             const concurrenceDiv = document.createElement('div');
@@ -460,6 +513,16 @@
                 input.type = 'text';
                 input.placeholder = 'Enter justices...';
                 
+                if (savedData?.concurrences?.[j]) {
+                    input.value = savedData.concurrences[j];
+                }
+                
+                input.addEventListener('input', (e) => {
+                    if (!isLoading) {
+                        updateConcurrences(caseKey, j, e.target.value);
+                    }
+                });
+                
                 concurrenceInput.appendChild(input);
                 concurrenceDiv.appendChild(concurrenceInput);
             }
@@ -467,7 +530,6 @@
             concurrenceCell.appendChild(concurrenceDiv);
             row.appendChild(concurrenceCell);
             
-            // Add Dissent(s) column
             const dissentCell = document.createElement('td');
             dissentCell.className = 'clickable';
             const dissentDiv = document.createElement('div');
@@ -481,6 +543,16 @@
                 input.type = 'text';
                 input.placeholder = 'Enter justices...';
                 
+                if (savedData?.dissents?.[j]) {
+                    input.value = savedData.dissents[j];
+                }
+                
+                input.addEventListener('input', (e) => {
+                    if (!isLoading) {
+                        updateDissents(caseKey, j, e.target.value);
+                    }
+                });
+                
                 dissentInput.appendChild(input);
                 dissentDiv.appendChild(dissentInput);
             }
@@ -489,40 +561,52 @@
             row.appendChild(dissentCell);
             
             tableBody.appendChild(row);
-            
-            // Reset select
-            select.value = '';
         }
         
-        function cycleState(element) {
+        function cycleState(element, caseKey) {
+            if (isLoading) return;
+            
             const currentState = element.dataset.state;
+            let newState;
             
             if (currentState === 'blank') {
-                element.dataset.state = 'red';
+                newState = 'red';
                 element.style.backgroundColor = '#dc3545';
             } else if (currentState === 'red') {
-                element.dataset.state = 'blue';
+                newState = 'blue';
                 element.style.backgroundColor = '#007bff';
             } else {
-                element.dataset.state = 'blank';
+                newState = 'blank';
                 element.style.backgroundColor = '';
             }
+            
+            element.dataset.state = newState;
+            
+            const justiceIndex = parseInt(element.dataset.justiceIndex);
+            const guesserIndex = parseInt(element.dataset.guesserIndex);
+            
+            const caseRef = ref(database, `cases/${caseKey}/votes/${justiceIndex}/${guesserIndex}`);
+            set(caseRef, newState);
         }
         
-        function removeCase(row) {
-            const tableBody = document.getElementById('tableBody');
-            row.remove();
-            
-            // If no rows left, show empty state
-            if (tableBody.children.length === 0) {
-                const emptyRow = document.createElement('tr');
-                emptyRow.className = 'empty-state';
-                const emptyCell = document.createElement('td');
-                emptyCell.colSpan = 14;
-                emptyCell.textContent = 'Add a case to begin making predictions!';
-                emptyRow.appendChild(emptyCell);
-                tableBody.appendChild(emptyRow);
-            }
+        function updateMajority(caseKey, guesserIndex, value) {
+            const caseRef = ref(database, `cases/${caseKey}/majority/${guesserIndex}`);
+            set(caseRef, value);
+        }
+        
+        function updateConcurrences(caseKey, guesserIndex, value) {
+            const caseRef = ref(database, `cases/${caseKey}/concurrences/${guesserIndex}`);
+            set(caseRef, value);
+        }
+        
+        function updateDissents(caseKey, guesserIndex, value) {
+            const caseRef = ref(database, `cases/${caseKey}/dissents/${guesserIndex}`);
+            set(caseRef, value);
+        }
+        
+        function removeCase(caseKey) {
+            const caseRef = ref(database, `cases/${caseKey}`);
+            remove(caseRef);
         }
     </script>
 </body>
