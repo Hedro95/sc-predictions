@@ -229,7 +229,7 @@
         
         .opinion-input select,
         .opinion-input input {
-            width: 100%;
+            width: 150px;
             padding: 6px;
             border: 1px solid #ced4da;
             border-radius: 4px;
@@ -535,7 +535,7 @@
                         clearTimeout(inputTimers[timerId]);
                         inputTimers[timerId] = setTimeout(() => {
                             updateConcurrences(caseKey, j, e.target.value);
-                        }, 500);
+                        }, 1000);
                     }
                 });
                 
@@ -569,7 +569,7 @@
                         clearTimeout(inputTimers[timerId]);
                         inputTimers[timerId] = setTimeout(() => {
                             updateDissents(caseKey, j, e.target.value);
-                        }, 500);
+                        }, 1000);
                     }
                 });
                 
