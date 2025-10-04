@@ -534,7 +534,11 @@
                 
                 input.addEventListener('input', (e) => {
                     if (!isLoading) {
-                        updateConcurrences(caseKey, j, e.target.value);
+                        const timerId = `concurrence_${caseKey}_${j}`;
+                        clearTimeout(inputTimers[timerId]);
+                        inputTimers[timerId] = setTimeout(() => {
+                            updateConcurrences(caseKey, j, e.target.value);
+                        }, 500);
                     }
                 });
                 
@@ -564,7 +568,11 @@
                 
                 input.addEventListener('input', (e) => {
                     if (!isLoading) {
-                        updateDissents(caseKey, j, e.target.value);
+                        const timerId = `dissent_${caseKey}_${j}`;
+                        clearTimeout(inputTimers[timerId]);
+                        inputTimers[timerId] = setTimeout(() => {
+                            updateDissents(caseKey, j, e.target.value);
+                        }, 500);
                     }
                 });
                 
